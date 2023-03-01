@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.25.0
+          args:
+            - --config.file=/etc/alertmanager/alertmanager.yml
+            - --storage.path=/var/lib/alertmanager/data
+          ports:
+            - containerPort: 9093
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100M
+            limits:
+              cpu: 250m
+              memory: 250M
+          volumeMounts:
+            - name: alertmanager-config-volume
+              mountPath: /etc/alertmanager/
+            - name: alertmanager-storage-volume
+              mountPath: /var/lib/alertmanager/data
+      volumes:
+        - name: alertmanager-config-volume
+          configMap:
+            defaultMode: 420
+            name: alertmanager
+        - name: alertmanager-storage-volume
+          persistentVolumeClaim:
+            claimName: alertmanager-vol

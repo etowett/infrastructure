@@ -1,0 +1,73 @@
+---
+- name: Initialize instances
+  hosts: pve5
+  gather_facts: false
+  become: true
+  vars:
+    os_user: admin01
+    os_password: 'xxx'
+    ssh_keys:
+      - ~/.ssh/id_rsa.pub
+      - ~/.ssh/id_citizix_admin.pub
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Update apt repositories and cache on server
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages on server
+      apt:
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Install common packages
+      apt:
+        name:
+        - vim
+        state: present
+
+    - name: Create a login user
+      user:
+        name: "{{ os_user }}"
+        shell: /bin/bash
+        password: "{{ os_password }}"
+        groups:
+        - sudo
+        state: present
+
+    - name: Add my pub key to authorized_keys
+      authorized_key:
+        user: "{{ os_user }}"
+        state: present
+        key: "{{ lookup('file', item) }}"
+      with_items:
+        - "{{ ssh_keys }}"
+
+    - name: Add {{ user }} to sudoers file
+      lineinfile:
+        path: /etc/sudoers
+        regexp: "{{ os_user }}"
+        line: '{{ os_user }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Deny root from logging in
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^(#)?PermitRootLogin \w*$'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: Restart sshd
+
+    - name: Allow specific users to log in
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^AllowUsers'
+        line: 'AllowUsers {{ os_user }}'
+        state: present
+      notify: Restart sshd
+
+# Create user admin01: superpasswordxxx
+# pip3.11 install -U passlib
+# python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"

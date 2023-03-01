@@ -1,0 +1,22 @@
+---
+- name: Cleanup Cluster
+  hosts: k8s-masters
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Remove login user
+      user:
+        name: admin01
+        state: absent
+
+    - name: clean up agent nodes
+      shell: |
+        /usr/local/bin/k3s-agent-uninstall.sh
+      args:
+        warn: no
+
+    - name: clean up master nodes
+      shell: |
+        /usr/local/bin/k3s-uninstall.sh
+      args:
+        warn: no

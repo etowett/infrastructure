@@ -1,0 +1,35 @@
+{
+    "variables": {
+        "name_prefix": "pritunl",
+        "aws_region": "eu-west-1",
+        "subnet_id": "subnet-xxx",
+        "vpc_id": "vpc-xxx"
+    },
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "{{user `aws_region`}}",
+        "instance_type": "t3.micro",
+        "ssh_username": "rocky",
+        "subnet_id": "{{user `subnet_id`}}",
+        "vpc_id": "{{user `vpc_id`}}",
+        "ami_name": "{{user `name_prefix`}}-v{{isotime \"200601021504\"}}",
+        "ami_description": "Spinmobile Pritunl Image",
+        "associate_public_ip_address": "true",
+        "source_ami_filter": {
+            "filters": {
+              "name": "base-*"
+            },
+            "owners": ["648921681300"],
+            "most_recent": true
+        }
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "scripts": [
+                "scripts/pritunl/setup-mongo.sh",
+                "scripts/pritunl/setup-pritunl.sh"
+            ]
+        }
+    ]
+}

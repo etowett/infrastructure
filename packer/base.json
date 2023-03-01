@@ -1,0 +1,41 @@
+{
+    "variables": {
+        "name_prefix": "base",
+        "aws_region": "eu-west-1",
+        "subnet_id": "subnet-xx",
+        "vpc_id": "vpc-xxx"
+    },
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "{{user `aws_region`}}",
+        "instance_type": "t3.micro",
+        "ssh_username": "rocky",
+        "subnet_id": "{{user `subnet_id`}}",
+        "vpc_id": "{{user `vpc_id`}}",
+        "ami_name": "{{user `name_prefix`}}-v{{isotime \"200601021504\"}}",
+        "ami_description": "Spinmobile Base Image",
+        "associate_public_ip_address": "true",
+        "ami_block_device_mappings" : [
+            {
+                "device_name" : "/dev/sda1",
+                "volume_size" : "8",
+                "delete_on_termination" : true
+            }
+        ],
+        "source_ami_filter": {
+            "filters": {
+                "name": "Rocky-9-*.x86_64-*"
+            },
+            "owners": ["aws-marketplace"],
+            "most_recent": true
+        }
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "scripts": [
+                "scripts/base/init.sh"
+            ]
+        }
+    ]
+}

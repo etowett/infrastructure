@@ -1,0 +1,53 @@
+all:
+  hosts:
+    k8s-citizix-s1:
+      ansible_ssh_host: 192.168.0.61
+      ansible_ssh_user: admin01
+    k8s-citizix-s2:
+      ansible_ssh_host: 192.168.0.62
+      ansible_ssh_user: admin01
+    k8s-citizix-s3:
+      ansible_ssh_host: 192.168.0.63
+      ansible_ssh_user: admin01
+    k8s-citizix-w1:
+      ansible_ssh_host: 192.168.0.71
+      ansible_ssh_user: admin01
+    k8s-citizix-w2:
+      ansible_ssh_host: 192.168.0.72
+      ansible_ssh_user: admin01
+    k8s-citizix-w3:
+      ansible_ssh_host: 192.168.0.73
+      ansible_ssh_user: admin01
+    k8s-citizix-w4:
+      ansible_ssh_host: 192.168.0.74
+      ansible_ssh_user: admin01
+    k8s-citizix-w5:
+      ansible_ssh_host: 192.168.0.75
+      ansible_ssh_user: admin01
+    sirenimports-postgres:
+      ansible_ssh_host: 192.168.0.81
+      ansible_ssh_user: admin01
+  children:
+    vms:
+      hosts:
+        k8s-citizix-s1:
+        k8s-citizix-s2:
+        k8s-citizix-s3:
+        k8s-citizix-w1:
+        k8s-citizix-w2:
+        k8s-citizix-w3:
+        k8s-citizix-w4:
+        k8s-citizix-w5:
+        citizix-postgres:
+    k8s-masters:
+      hosts:
+        k8s-citizix-s1:
+        k8s-citizix-s2:
+        k8s-citizix-s3:
+    k8s-nodes:
+      hosts:
+        k8s-citizix-w1:
+        k8s-citizix-w2:
+        k8s-citizix-w3:
+        k8s-citizix-w4:
+        k8s-citizix-w5:

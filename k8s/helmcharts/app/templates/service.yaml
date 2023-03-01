@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: app
+      protocol: TCP
+      name: app
+    {{- if .Values.service.admin }}
+    - port: {{ .Values.service.admin }}
+      targetPort: admin
+      protocol: TCP
+      name: admin
+    {{- end }}
+    {{- if .Values.service.elbSSLTermination }}
+    - port: {{ .Values.service.elbSSLTermination }}
+      targetPort: app
+      protocol: TCP
+      name: https
+    {{- end }}
+    {{- if .Values.service.https }}
+    - port: {{ .Values.service.https }}
+      targetPort: https
+      protocol: TCP
+      name: https
+    {{- end }}
+    {{- range $key, $value := .Values.extraTCPPorts }}
+    - port: {{ $value }}
+      targetPort: {{ $key }}
+      protocol: TCP
+      name: {{ $key }}
+    {{- end }}
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}

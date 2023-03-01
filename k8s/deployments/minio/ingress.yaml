@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  labels:
+    app: minio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: miminio.super001.com
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: minio
+            port:
+              number: 9001
+  tls:
+  - hosts:
+    - miminio.super001.com
+    secretName: minio-tls-ingress

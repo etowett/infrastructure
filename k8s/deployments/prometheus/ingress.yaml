@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: prometheus
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: prometheus.in.sireniports.co
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090
+  tls:
+  - hosts:
+    - prometheus.in.sireniports.co
+    secretName: prometheus-tls-ingress

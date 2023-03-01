@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"postgres","Source":"../../modules/cloudsql","Dir":"../../modules/cloudsql"},{"Key":"redis","Source":"../../modules/redis","Dir":"../../modules/redis"},{"Key":"network","Source":"../../modules/network","Dir":"../../modules/network"},{"Key":"","Source":"","Dir":"."},{"Key":"gke","Source":"../../modules/gke","Dir":"../../modules/gke"}]}

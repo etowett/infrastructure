@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "app.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "app.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: "{{ .Release.Name }}"
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: app
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          {{- if .Values.service.admin }}
+           - name: admin
+             containerPort: {{ .Values.adminPort }}
+             protocol: TCP
+          {{- end }}
+          {{- if .Values.service.https }}
+           - name: https
+             containerPort: {{ .Values.httpsPort }}
+             protocol: TCP
+          {{- end }}
+          {{- range $key, $value := .Values.extraTCPPorts }}
+           - name: {{ $key }}
+             containerPort: {{ $value }}
+             protocol: TCP
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port:  {{ .Values.livenessProbe.port }}
+              {{- with .Values.readinessProbe.httpHeaders }}
+              httpHeaders:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            initialDelaySeconds:  {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds:  {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds:  {{ .Values.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path:  {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+              {{- with .Values.readinessProbe.httpHeaders }}
+              httpHeaders:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            initialDelaySeconds:  {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          {{- if .Values.volumeMounts }}
+            {{ toYaml .Values.volumeMounts | nindent 12 }}
+          {{- end }}
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+          {{- range $k, $v := $value }}
+                  {{ $k }}: {{ $v }}
+          {{- end}}
+          {{- end }}
+        {{- if .Values.sidecarimage }}
+        - name: "{{ .Values.sidecarimage.name }}"
+          image: "{{ .Values.sidecarimage.repository }}:{{ .Values.sidecarimage.tag }}"
+          imagePullPolicy: {{ .Values.sidecarimage.pullPolicy }}
+          {{- if .Values.sidecarimage.ports }}
+          ports:
+            {{ toYaml .Values.sidecarimage.ports | nindent 14 }}
+          {{- end }}
+          {{- if .Values.sidecarimage.mounts }}
+          volumeMounts:
+            {{ toYaml .Values.sidecarimage.mounts | nindent 14 }}
+          {{- end }}
+          {{- if .Values.sidecarimage.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.sidecarimage.livenessProbe.path }}
+              port:  {{ .Values.sidecarimage.livenessProbe.port }}
+            initialDelaySeconds:  {{ .Values.sidecarimage.livenessProbe.initialDelaySeconds }}
+            periodSeconds:  {{ .Values.sidecarimage.livenessProbe.periodSeconds }}
+            timeoutSeconds:  {{ .Values.sidecarimage.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.sidecarimage.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path:  {{ .Values.sidecarimage.readinessProbe.path }}
+              port: {{ .Values.sidecarimage.readinessProbe.port }}
+            initialDelaySeconds:  {{ .Values.sidecarimage.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.sidecarimage.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.sidecarimage.readinessProbe.timeoutSeconds }}
+          {{- end }}
+        {{- end }}
+      {{ if .Values.initContainer.enabled -}}
+      initContainers:
+        - name: {{ .Values.initContainer.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy:  {{ .Values.image.pullPolicy }}
+          command:
+          - "/bin/sh"
+          args:
+          - "-c"
+          - {{ .Values.initContainer.command }}
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+          {{- range $k, $v := $value }}
+                  {{ $k }}: {{ $v }}
+          {{- end}}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.initContainer.resources | nindent 12 }}
+      {{- end }}
+      volumes:
+      {{- if .Values.volumes }}
+        {{ toYaml .Values.volumes | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

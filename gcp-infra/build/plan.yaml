@@ -1,0 +1,38 @@
+---
+logsBucket: $_LOG_BUCKET
+options:
+  logging: GCS_ONLY
+steps:
+- id: 'echo branch name'
+  name: 'alpine:3'
+  entrypoint: 'sh'
+  args:
+  - '-c'
+  - |
+      echo "********************"
+      echo "Working on $BRANCH_NAME"
+      echo "********************"
+
+- id: 'tf init'
+  name: &tf-image 'hashicorp/terraform:1.3.7'
+  entrypoint: 'sh'
+  args:
+  - '-c'
+  - |
+      cd ${_DIR}/
+      echo "******************************"
+      echo "terraform init at ${_DIR}/"
+      echo "******************************"
+      terraform init || exit 1
+
+- id: 'tf plan'
+  name: *tf-image
+  entrypoint: 'sh'
+  args:
+  - '-c'
+  - |
+      cd ${_DIR}/
+      echo "******************************"
+      echo "terraform plan at ${_DIR}/"
+      echo "******************************"
+      terraform plan || exit 1
